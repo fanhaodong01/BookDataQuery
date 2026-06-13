@@ -1,0 +1,116 @@
+{% extends 'books/base.html' %}
+
+{% block title %}书籍信息查询{% endblock %}
+
+{% block content %}
+<header>
+    <h1>书籍信息查询</h1>
+    <form class="search-form" method="get" action="{% url 'index' %}" id="search-form">
+        <select name="search_type" title="搜索方式">
+            <option value="title" {% if search_type == 'title' %}selected{% endif %}>书名搜索</option>
+            <option value="isbn" {% if search_type == 'isbn' %}selected{% endif %}>ISBN搜索</option>
+            <option value="author" {% if search_type == 'author' %}selected{% endif %}>作者搜索</option>
+        </select>
+        <input type="text" name="keyword" placeholder="请输入关键词" value="{{ keyword }}">
+
+        <input type="hidden" name="start_date" id="start_date" value="{{ start_date }}">
+        <input type="hidden" name="end_date" id="end_date" value="{{ end_date }}">
+        <button type="button" class="date-range-btn" id="date-range-btn">全部时间</button>
+
+        <button type="submit">搜索</button>
+    </form>
+</header>
+
+<div class="modal-overlay" id="date-modal">
+    <div class="modal">
+        <h3>选择出版时间范围</h3>
+        <label for="modal-start">开始时间</label>
+        <input type="date" id="modal-start" value="{{ start_date }}">
+        <label for="modal-end">结束时间（留空表示至今）</label>
+        <input type="date" id="modal-end" value="{{ end_date }}">
+        <div class="modal-actions">
+            <button type="button" class="cancel" id="modal-cancel">取消</button>
+            <button type="button" class="confirm" id="modal-confirm">确定</button>
+        </div>
+    </div>
+</div>
+
+<section class="results">
+    {% if has_search %}
+        <h2>搜索结果</h2>
+        {% if books %}
+            <ul class="book-list">
+                {% for book in books %}
+                <li>
+                    <a href="{% url 'book_detail' book.isbn %}">{{ book.title }}</a>
+                    <div class="book-meta">
+                        作者：{{ book.author }} &nbsp;|&nbsp;
+                        出版社：{{ book.publisher }} &nbsp;|&nbsp;
+                        出版时间：{{ book.publish_date|date:"Y-m-d" }} &nbsp;|&nbsp;
+                        ISBN：{{ book.isbn }}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="empty">未找到相关书籍</p>
+        {% endif %}
+    {% else %}
+        <p class="empty">请输入关键词或选择时间范围开始搜索</p>
+    {% endif %}
+</section>
+
+<script>
+(function() {
+    const dateBtn = document.getElementById('date-range-btn');
+    const modal = document.getElementById('date-modal');
+    const modalStart = document.getElementById('modal-start');
+    const modalEnd = document.getElementById('modal-end');
+    const hiddenStart = document.getElementById('start_date');
+    const hiddenEnd = document.getElementById('end_date');
+    const confirmBtn = document.getElementById('modal-confirm');
+    const cancelBtn = document.getElementById('modal-cancel');
+
+    function updateButtonText() {
+        const start = hiddenStart.value;
+        const end = hiddenEnd.value;
+        if (!start && !end) {
+            dateBtn.textContent = '全部时间';
+        } else if (start && !end) {
+            dateBtn.textContent = start + ' 至 今';
+        } else if (!start && end) {
+            dateBtn.textContent = '截至 ' + end;
+        } else {
+            dateBtn.textContent = start + ' 至 ' + end;
+        }
+    }
+
+    updateButtonText();
+
+    dateBtn.addEventListener('click', function() {
+        modalStart.value = hiddenStart.value;
+        modalEnd.value = hiddenEnd.value;
+        modal.classList.add('active');
+    });
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    cancelBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    confirmBtn.addEventListener('click', function() {
+        hiddenStart.value = modalStart.value;
+        hiddenEnd.value = modalEnd.value;
+        updateButtonText();
+        closeModal();
+    });
+})();
+</script>
+{% endblock %}

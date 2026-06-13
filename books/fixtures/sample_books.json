@@ -1,0 +1,62 @@
+[
+  {
+    "model": "books.book",
+    "pk": "9787111544937",
+    "fields": {
+      "title": "Python编程：从入门到实践",
+      "author": "Eric Matthes",
+      "publish_date": "2016-07-01",
+      "publisher": "人民邮电出版社",
+      "introduction": "本书是一本针对所有层次的Python读者而作的Python入门书。",
+      "catalog": "第一部分 基础知识\n第1章 起步\n第2章 变量和简单数据类型\n第二部分 项目\n第12章 武装飞船"
+    }
+  },
+  {
+    "model": "books.book",
+    "pk": "9787115428028",
+    "fields": {
+      "title": "流畅的Python",
+      "author": "Luciano Ramalho",
+      "publish_date": "2017-05-01",
+      "publisher": "人民邮电出版社",
+      "introduction": "本书致力于帮助Python开发人员挖掘这门语言及相关程序库的优秀特性。",
+      "catalog": "第一部分 数据结构\n第1章 Python数据模型\n第2章 序列构成的数组"
+    }
+  },
+  {
+    "model": "books.book",
+    "pk": "9787121363080",
+    "fields": {
+      "title": "Django企业开发实战",
+      "author": "胡阳",
+      "publish_date": "2019-06-01",
+      "publisher": "电子工业出版社",
+      "introduction": "本书以实战方式介绍如何使用Django进行Web开发。",
+      "catalog": "第1章 Django简介\n第2章 搭建开发环境\n第3章 创建第一个Django项目"
+    }
+  },
+  {
+    "model": "books.book",
+    "pk": "9787302496505",
+    "fields": {
+      "title": "深入浅出Docker",
+      "author": "Nigel Poulton",
+      "publish_date": "2019-03-01",
+      "publisher": "清华大学出版社",
+      "introduction": "本书是一本Docker入门图书，适合广大Docker初学者阅读。",
+      "catalog": "第1章 Docker概览\n第2章 在容器中运行软件"
+    }
+  },
+  {
+    "model": "books.book",
+    "pk": "9787111615439",
+    "fields": {
+      "title": "Python数据分析",
+      "author": "Wes McKinney",
+      "publish_date": "2018-08-01",
+      "publisher": "机械工业出版社",
+      "introduction": "本书由pandas项目创始人Wes McKinney亲笔撰写。",
+      "catalog": "第1章 准备工作\n第2章 Python语法基础"
+    }
+  }
+]
