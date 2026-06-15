@@ -5,6 +5,6 @@ from books import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name='index'),
-    path('book/<str:isbn>/', views.book_detail, name='book_detail'),
+    path('api/books/', views.BookSearchAPIView.as_view(), name='book_search'),
+    path('api/books/<str:isbn>/', views.BookDetailAPIView.as_view(), name='book_detail'),
 ]
