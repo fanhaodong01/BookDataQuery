@@ -79,7 +79,7 @@ DATABASES = {
         'NAME': 'bookquery',
         'USER': 'root',
         'PASSWORD': 'fhd000101',
-        'HOST': '192.168.1.78',
+        'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
             'charset': 'utf8mb4',
