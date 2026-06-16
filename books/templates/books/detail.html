@@ -63,12 +63,12 @@
                     '<dt>目录</dt>' +
                     '<dd>' + linebreaksBr(book.catalog) + '</dd>' +
                 '</dl>' +
-                '<a class="back-link" href="/">← 返回搜索</a>';
+                '<a class="back-link" href="javascript:history.back()">← 返回搜索</a>';
         }
 
         function renderError(message) {
             container.innerHTML = '<p class="empty">' + escapeHtml(message) + '</p>' +
-                '<a class="back-link" href="/">← 返回搜索</a>';
+                '<a class="back-link" href="javascript:history.back()">← 返回搜索</a>';
         }
 
         const isbn = extractIsbn();
