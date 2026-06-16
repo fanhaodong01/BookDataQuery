@@ -1,116 +1,227 @@
-{% extends 'books/base.html' %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书籍信息查询</title>
+    <link rel="stylesheet" href="/static/books/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>书籍信息查询</h1>
+            <form class="search-form" id="search-form">
+                <select name="search_type" title="搜索方式">
+                    <option value="title">书名搜索</option>
+                    <option value="isbn">ISBN搜索</option>
+                    <option value="author">作者搜索</option>
+                </select>
+                <input type="text" name="keyword" placeholder="请输入关键词">
 
-{% block title %}书籍信息查询{% endblock %}
+                <input type="hidden" name="start_date" id="start_date">
+                <input type="hidden" name="end_date" id="end_date">
+                <button type="button" class="date-range-btn" id="date-range-btn">全部时间</button>
 
-{% block content %}
-<header>
-    <h1>书籍信息查询</h1>
-    <form class="search-form" method="get" action="{% url 'index' %}" id="search-form">
-        <select name="search_type" title="搜索方式">
-            <option value="title" {% if search_type == 'title' %}selected{% endif %}>书名搜索</option>
-            <option value="isbn" {% if search_type == 'isbn' %}selected{% endif %}>ISBN搜索</option>
-            <option value="author" {% if search_type == 'author' %}selected{% endif %}>作者搜索</option>
-        </select>
-        <input type="text" name="keyword" placeholder="请输入关键词" value="{{ keyword }}">
+                <button type="submit">搜索</button>
+            </form>
+        </header>
 
-        <input type="hidden" name="start_date" id="start_date" value="{{ start_date }}">
-        <input type="hidden" name="end_date" id="end_date" value="{{ end_date }}">
-        <button type="button" class="date-range-btn" id="date-range-btn">全部时间</button>
-
-        <button type="submit">搜索</button>
-    </form>
-</header>
-
-<div class="modal-overlay" id="date-modal">
-    <div class="modal">
-        <h3>选择出版时间范围</h3>
-        <label for="modal-start">开始时间</label>
-        <input type="date" id="modal-start" value="{{ start_date }}">
-        <label for="modal-end">结束时间（留空表示至今）</label>
-        <input type="date" id="modal-end" value="{{ end_date }}">
-        <div class="modal-actions">
-            <button type="button" class="cancel" id="modal-cancel">取消</button>
-            <button type="button" class="confirm" id="modal-confirm">确定</button>
+        <div class="modal-overlay" id="date-modal">
+            <div class="modal">
+                <h3>选择出版时间范围</h3>
+                <label for="modal-start">开始时间</label>
+                <input type="date" id="modal-start">
+                <label for="modal-end">结束时间（留空表示至今）</label>
+                <input type="date" id="modal-end">
+                <div class="modal-actions">
+                    <button type="button" class="cancel" id="modal-cancel">取消</button>
+                    <button type="button" class="confirm" id="modal-confirm">确定</button>
+                </div>
+            </div>
         </div>
+
+        <section class="results" id="results">
+            <p class="empty">请输入关键词或选择时间范围开始搜索</p>
+        </section>
     </div>
-</div>
 
-<section class="results">
-    {% if has_search %}
-        <h2>搜索结果</h2>
-        {% if books %}
-            <ul class="book-list">
-                {% for book in books %}
-                <li>
-                    <a href="{% url 'book_detail' book.isbn %}">{{ book.title }}</a>
-                    <div class="book-meta">
-                        作者：{{ book.author }} &nbsp;|&nbsp;
-                        出版社：{{ book.publisher }} &nbsp;|&nbsp;
-                        出版时间：{{ book.publish_date|date:"Y-m-d" }} &nbsp;|&nbsp;
-                        ISBN：{{ book.isbn }}
-                    </div>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="empty">未找到相关书籍</p>
-        {% endif %}
-    {% else %}
-        <p class="empty">请输入关键词或选择时间范围开始搜索</p>
-    {% endif %}
-</section>
+    <script>
+    (function() {
+        const form = document.getElementById('search-form');
+        const searchTypeSelect = form.querySelector('select[name="search_type"]');
+        const keywordInput = form.querySelector('input[name="keyword"]');
+        const hiddenStart = document.getElementById('start_date');
+        const hiddenEnd = document.getElementById('end_date');
+        const dateBtn = document.getElementById('date-range-btn');
+        const modal = document.getElementById('date-modal');
+        const modalStart = document.getElementById('modal-start');
+        const modalEnd = document.getElementById('modal-end');
+        const confirmBtn = document.getElementById('modal-confirm');
+        const cancelBtn = document.getElementById('modal-cancel');
+        const resultsSection = document.getElementById('results');
 
-<script>
-(function() {
-    const dateBtn = document.getElementById('date-range-btn');
-    const modal = document.getElementById('date-modal');
-    const modalStart = document.getElementById('modal-start');
-    const modalEnd = document.getElementById('modal-end');
-    const hiddenStart = document.getElementById('start_date');
-    const hiddenEnd = document.getElementById('end_date');
-    const confirmBtn = document.getElementById('modal-confirm');
-    const cancelBtn = document.getElementById('modal-cancel');
-
-    function updateButtonText() {
-        const start = hiddenStart.value;
-        const end = hiddenEnd.value;
-        if (!start && !end) {
-            dateBtn.textContent = '全部时间';
-        } else if (start && !end) {
-            dateBtn.textContent = start + ' 至 今';
-        } else if (!start && end) {
-            dateBtn.textContent = '截至 ' + end;
-        } else {
-            dateBtn.textContent = start + ' 至 ' + end;
+        function getParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                search_type: params.get('search_type') || 'title',
+                keyword: params.get('keyword') || '',
+                start_date: params.get('start_date') || '',
+                end_date: params.get('end_date') || ''
+            };
         }
-    }
 
-    updateButtonText();
+        function updateFormFromUrl() {
+            const params = getParams();
+            searchTypeSelect.value = ['title', 'isbn', 'author'].includes(params.search_type) ? params.search_type : 'title';
+            keywordInput.value = params.keyword;
+            hiddenStart.value = params.start_date;
+            hiddenEnd.value = params.end_date;
+            updateButtonText();
+        }
 
-    dateBtn.addEventListener('click', function() {
-        modalStart.value = hiddenStart.value;
-        modalEnd.value = hiddenEnd.value;
-        modal.classList.add('active');
-    });
+        function updateButtonText() {
+            const start = hiddenStart.value;
+            const end = hiddenEnd.value;
+            if (!start && !end) {
+                dateBtn.textContent = '全部时间';
+            } else if (start && !end) {
+                dateBtn.textContent = start + ' 至 今';
+            } else if (!start && end) {
+                dateBtn.textContent = '截至 ' + end;
+            } else {
+                dateBtn.textContent = start + ' 至 ' + end;
+            }
+        }
 
-    function closeModal() {
-        modal.classList.remove('active');
-    }
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
-    cancelBtn.addEventListener('click', closeModal);
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
+        function renderResults(data) {
+            const books = data.results || [];
+            const count = data.count || 0;
+            const hasSearch = data.keyword || data.start_date || data.end_date;
+
+            if (!hasSearch) {
+                resultsSection.innerHTML = '<p class="empty">请输入关键词或选择时间范围开始搜索</p>';
+                return;
+            }
+
+            let html = '<h2>搜索结果</h2>';
+            if (books.length === 0) {
+                html += '<p class="empty">未找到相关书籍</p>';
+            } else {
+                html += '<ul class="book-list">';
+                books.forEach(function(book) {
+                    html += '<li>' +
+                        '<a href="/detail/' + encodeURIComponent(book.isbn) + '/">' + escapeHtml(book.title) + '</a>' +
+                        '<div class="book-meta">' +
+                            '作者：' + escapeHtml(book.author) + ' &nbsp;|&nbsp; ' +
+                            '出版社：' + escapeHtml(book.publisher) + ' &nbsp;|&nbsp; ' +
+                            '出版时间：' + escapeHtml(formatDate(book.publish_date)) + ' &nbsp;|&nbsp; ' +
+                            'ISBN：' + escapeHtml(book.isbn) +
+                        '</div>' +
+                    '</li>';
+                });
+                html += '</ul>';
+            }
+            resultsSection.innerHTML = html;
+        }
+
+        function fetchResults() {
+            const params = getParams();
+            if (!params.keyword && !params.start_date && !params.end_date) {
+                renderResults({
+                    search_type: params.search_type,
+                    keyword: '',
+                    start_date: '',
+                    end_date: '',
+                    count: 0,
+                    results: []
+                });
+                return;
+            }
+
+            resultsSection.innerHTML = '<p class="empty">搜索中...</p>';
+
+            const query = new URLSearchParams();
+            query.set('search_type', params.search_type);
+            if (params.keyword) query.set('keyword', params.keyword);
+            if (params.start_date) query.set('start_date', params.start_date);
+            if (params.end_date) query.set('end_date', params.end_date);
+
+            fetch('/api/books/?' + query.toString())
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('请求失败，状态码：' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    renderResults(data);
+                })
+                .catch(function(error) {
+                    resultsSection.innerHTML = '<p class="empty">加载失败：' + escapeHtml(error.message) + '</p>';
+                });
+        }
+
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = new URLSearchParams();
+            query.set('search_type', searchTypeSelect.value);
+            const keyword = keywordInput.value.trim();
+            if (keyword) query.set('keyword', keyword);
+            const start = hiddenStart.value.trim();
+            const end = hiddenEnd.value.trim();
+            if (start) query.set('start_date', start);
+            if (end) query.set('end_date', end);
+
+            const newUrl = window.location.pathname + '?' + query.toString();
+            window.history.replaceState(null, '', newUrl);
+            updateFormFromUrl();
+            fetchResults();
+        });
+
+        dateBtn.addEventListener('click', function() {
+            modalStart.value = hiddenStart.value;
+            modalEnd.value = hiddenEnd.value;
+            modal.classList.add('active');
+        });
+
+        function closeModal() {
+            modal.classList.remove('active');
+        }
+
+        cancelBtn.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        confirmBtn.addEventListener('click', function() {
+            hiddenStart.value = modalStart.value;
+            hiddenEnd.value = modalEnd.value;
+            updateButtonText();
             closeModal();
-        }
-    });
+        });
 
-    confirmBtn.addEventListener('click', function() {
-        hiddenStart.value = modalStart.value;
-        hiddenEnd.value = modalEnd.value;
-        updateButtonText();
-        closeModal();
-    });
-})();
-</script>
-{% endblock %}
+        updateFormFromUrl();
+        fetchResults();
+    })();
+    </script>
+</body>
+</html>

@@ -1,26 +1,99 @@
-{% extends 'books/base.html' %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书籍详情</title>
+    <link rel="stylesheet" href="/static/books/style.css">
+</head>
+<body>
+    <div class="container">
+        <article class="detail" id="book-detail">
+            <p class="empty">加载中...</p>
+        </article>
+    </div>
 
-{% block title %}{{ book.title }} - 书籍详情{% endblock %}
+    <script>
+    (function() {
+        const container = document.getElementById('book-detail');
 
-{% block content %}
-<article class="detail">
-    <h1>{{ book.title }}</h1>
-    <dl>
-        <dt>ISBN</dt>
-        <dd>{{ book.isbn }}</dd>
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-        <dt>出版时间</dt>
-        <dd>{{ book.publish_date|date:"Y-m-d" }}</dd>
+        function linebreaksBr(text) {
+            if (text === null || text === undefined) return '';
+            return escapeHtml(String(text)).replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
+        }
 
-        <dt>出版社</dt>
-        <dd>{{ book.publisher }}</dd>
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
-        <dt>简介</dt>
-        <dd>{{ book.introduction|linebreaksbr }}</dd>
+        function extractIsbn() {
+            const parts = window.location.pathname.split('/').filter(function(part) { return part; });
+            // Expected path: /detail/<isbn>/
+            if (parts.length >= 2 && parts[0] === 'detail') {
+                return decodeURIComponent(parts[1]);
+            }
+            return null;
+        }
 
-        <dt>目录</dt>
-        <dd>{{ book.catalog|linebreaksbr }}</dd>
-    </dl>
-    <a class="back-link" href="{% url 'index' %}">← 返回搜索</a>
-</article>
-{% endblock %}
+        function renderBook(book) {
+            document.title = book.title + ' - 书籍详情';
+            container.innerHTML =
+                '<h1>' + escapeHtml(book.title) + '</h1>' +
+                '<dl>' +
+                    '<dt>ISBN</dt>' +
+                    '<dd>' + escapeHtml(book.isbn) + '</dd>' +
+                    '<dt>出版时间</dt>' +
+                    '<dd>' + escapeHtml(formatDate(book.publish_date)) + '</dd>' +
+                    '<dt>出版社</dt>' +
+                    '<dd>' + escapeHtml(book.publisher) + '</dd>' +
+                    '<dt>简介</dt>' +
+                    '<dd>' + linebreaksBr(book.introduction) + '</dd>' +
+                    '<dt>目录</dt>' +
+                    '<dd>' + linebreaksBr(book.catalog) + '</dd>' +
+                '</dl>' +
+                '<a class="back-link" href="/">← 返回搜索</a>';
+        }
+
+        function renderError(message) {
+            container.innerHTML = '<p class="empty">' + escapeHtml(message) + '</p>' +
+                '<a class="back-link" href="/">← 返回搜索</a>';
+        }
+
+        const isbn = extractIsbn();
+        if (!isbn) {
+            renderError('未提供书籍 ISBN。');
+            return;
+        }
+
+        fetch('/api/books/' + encodeURIComponent(isbn) + '/')
+            .then(function(response) {
+                if (response.status === 404) {
+                    throw new Error('未找到该书籍。');
+                }
+                if (!response.ok) {
+                    throw new Error('请求失败，状态码：' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(book) {
+                renderBook(book);
+            })
+            .catch(function(error) {
+                renderError(error.message);
+            });
+    })();
+    </script>
+</body>
+</html>
