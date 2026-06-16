@@ -8,6 +8,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/books/', views.BookSearchAPIView.as_view(), name='book_search'),
     path('api/books/<str:isbn>/', views.BookDetailAPIView.as_view(), name='book_detail'),
-    path('detail.html', TemplateView.as_view(template_name='books/detail.html'), name='book_detail_page'),
-    path('', TemplateView.as_view(template_name='books/index.html'), name='index'),
+    # path('detail.html', TemplateView.as_view(template_name='books/detail.html'), name='book_detail_page'),
+    # path('', TemplateView.as_view(template_name='books/index.html'), name='index'),
 ]
